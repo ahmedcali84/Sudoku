@@ -17,9 +17,8 @@ typedef struct {
 } CellPool;
 
 CellPool Board[BOARD_ROWS][BOARD_COLS];
-Grid *grid;
 
-bool OccupyCell(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col , int value);
+void OccupyCell(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col , int value);
 
 void InitBoard(Grid *g) {
     assert(BOARD_ROWS == g->count && BOARD_COLS == g->items[0]->count);
@@ -29,32 +28,29 @@ void InitBoard(Grid *g) {
             if (n == 0) {
                 Board[i][j].occupied = false;
                 Board[i][j].cell = NULL;
+            } else {
+                OccupyCell(Board, i , j , n);
             }
-            OccupyCell(Board, i , j , n);
         }
     }
 }
 
 bool CheckCellStatus(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col) {
-    if (_Board[row][col].occupied) {
+    if (_Board[row][col].occupied && _Board[row][col].cell != NULL) {
         fprintf(stderr, "Cell %d %d Occupied.\n", row , col);
         return true;
     }
     return false;
 }
 
-bool OccupyCell(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col , int value) {
-    if(CheckCellStatus(_Board, row, col)) {
-        return false;
-    }
+void OccupyCell(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col , int value) {
     _Board[row][col].cell = malloc(sizeof(Cell));
     if (_Board[row][col].cell == NULL) {
         fprintf(stderr, "ERROR: Failed to Allocate Memory for Cell\n");
-        return false;
+        return ;
     }
     _Board[row][col].cell->value = value;
     _Board[row][col].occupied = true;
-    return true;
 }
 
 void PrintBoard(CellPool _Board[BOARD_ROWS][BOARD_COLS]) {
@@ -74,45 +70,72 @@ void PrintBoard(CellPool _Board[BOARD_ROWS][BOARD_COLS]) {
             }
         }
         printf("\n");
-    printf("-----------------------------------------\n");
+        printf("-----------------------------------------\n");
     }
+}
+
+void FreeCell(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col) {
+    free(_Board[row][col].cell);
+    _Board[row][col].cell = NULL;
+    _Board[row][col].occupied = false;
 }
 
 void FreeBoard(CellPool _Board[BOARD_ROWS][BOARD_COLS]) {
     for (int i = 0; i < BOARD_ROWS; ++i) {
         for (int j = 0; j < BOARD_COLS; ++j) {
             if(_Board[i][j].occupied) {
-                free(_Board[i][j].cell);
+                FreeCell(_Board, i , j);
             }
         }
     }
 }
 
 bool Constraint(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row, int col) {
-    if (!CheckCellStatus(_Board, row, col)) {
+    if (CheckCellStatus(_Board, row, col)) {
         return false;
     }
 
     for (int i = 0; i < BOARD_ROWS; ++i) {
-        for (int j = 0; j < BOARD_COLS; ++j) {
-            if(!CheckCellStatus(Board, i , j)) {
-                if(&_Board[i][j].cell->value == &_Board[j][i].cell->value) {
-                    return true;
-                }
-            }
+        if (i != row && _Board[i][col].occupied && 
+            _Board[i][col].cell->value == _Board[row][col].cell->value) {
+            return false; // Duplicate found in the same column
+        }
+
+        if (i != col && _Board[row][i].occupied && 
+            _Board[row][i].cell->value == _Board[row][col].cell->value) {
+            return false; // Duplicate found in the same row
         }
     }
     return false;
 }
 
+int RandomInt() {
+    return rand() % BOARD_ROWS + 1;
+}
+
+void Solve(CellPool _Board[BOARD_ROWS][BOARD_COLS]) {
+    for (int i = 0; i < BOARD_ROWS; ++i) {
+        for (int j = 0; j < BOARD_COLS; ++j) {
+            if(!CheckCellStatus(_Board, i , j)) {
+                OccupyCell(_Board, i , j , RandomInt());
+                if (Constraint(_Board, i , j)) {
+                    // FreeCell(_Board, i , j);
+                    OccupyCell(_Board, i , j , RandomInt());
+                }
+            }
+        }
+    }
+}
+
 int main(void) {
-    grid = grid_alloc(grid);
+    Grid *grid = grid_alloc();
     const char *file_path = "data/grid1.txt";
     if(!read_file(file_path, grid)) {
         return 1;
     }
 
     InitBoard(grid);
+    Solve(Board);
     PrintBoard(Board);
 
     // NOTE: Free Allocated Memory
