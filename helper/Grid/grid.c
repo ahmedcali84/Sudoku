@@ -1,7 +1,7 @@
 #include "grid.h"
 
-Grid *grid_alloc(Grid *grid) {
-    grid = malloc(sizeof(Grid));
+Grid *grid_alloc() {
+    Grid *grid = malloc(sizeof(Grid));
     grid->items = malloc(sizeof(Line*) * INIT_CAPACITY);
     grid->count = 0;
     grid->capacity = INIT_CAPACITY;
@@ -19,7 +19,6 @@ void append_to_grid(Grid *grid, Line *line) {
     grid->items[grid->count] = malloc(sizeof(Line));
     memcpy(grid->items[grid->count], line, sizeof(*line));
     grid->count++;
-    grid->capacity+=1;
 }
 
 void grid_dealloc(Grid *g) {
@@ -29,7 +28,6 @@ void grid_dealloc(Grid *g) {
     }
     free(g->items);
     free(g);
-    g = NULL;
 }
 
 bool read_file(const char *file_path, Grid *grid) {
