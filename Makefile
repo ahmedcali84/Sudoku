@@ -1,9 +1,9 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -ggdb -I./helper/matrix/include
-LIB=-Wl,-rpath,./helper/matrix/lib -L./helper/matrix/lib
-SRC=src/main.c src/sudoku.c helper/Grid/grid.c 
+CFLAGS=-Wall -Wextra -ggdb -I./helper/include
+LIB=-Wl,-rpath,./helper/lib -L./helper/lib
+SRC=src/main.c src/sudoku.c
 OBJ=main
-LFLAGS=-l:libmatrix.so -lm -ldl -lpthread
+LFLAGS=-l:libhelper.so -lm -ldl -lpthread
 
 all:
 	$(CC) $(CFLAGS) $(LIB) $(SRC) -o $(OBJ) $(LFLAGS)
