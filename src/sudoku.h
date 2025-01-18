@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
-#include  "../helper/Grid/grid.h"
+#include <helper.h>
 
 #define BOARD_ROWS 9
 #define BOARD_COLS BOARD_ROWS
