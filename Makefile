@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -ggdb -I./helper/matrix/include
 LIB=-Wl,-rpath,./helper/matrix/lib -L./helper/matrix/lib
-SRC=main.c helper/Grid/grid.c 
+SRC=src/main.c src/sudoku.c helper/Grid/grid.c 
 OBJ=main
 LFLAGS=-l:libmatrix.so -lm -ldl -lpthread
 
