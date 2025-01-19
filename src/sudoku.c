@@ -26,7 +26,7 @@ bool CheckCellStatus(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col)
 
 // NOTE: Function to Set a Cell from the Board to a Specific Value
 void SetCell(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col , int value) {
-    _Board[row][col].cell = malloc(sizeof(Cell));
+    _Board[row][col].cell = (Cell *)malloc(sizeof(Cell));
     if (_Board[row][col].cell == NULL) {
         fprintf(stderr, "ERROR: Failed to Allocate Memory for Cell\n");
         return ;
@@ -118,7 +118,7 @@ bool ValidBoard(CellPool _Board[BOARD_ROWS][BOARD_COLS]) {
 
 // NOTE: Functions that return an array  of potential Candidates for a cell in the Board
 int *GetCandidates(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col, int *count) {
-    int *Candidates = malloc(sizeof(int) * BOARD_COLS*1);
+    int *Candidates = (int *)malloc(sizeof(int) * BOARD_COLS*1);
     for (int i = 0; i < BOARD_COLS; ++i) {
         Candidates[i] = i + 1;
     }
@@ -160,7 +160,7 @@ int *GetCandidates(CellPool _Board[BOARD_ROWS][BOARD_COLS], int row , int col, i
         }
     }
 
-    int *ValidCandidates = malloc(sizeof(int) * BOARD_COLS);
+    int *ValidCandidates = (int *) malloc(sizeof(int) * BOARD_COLS);
     if (ValidCandidates == NULL) {
         fprintf(stderr, "Memory Allocation Failed.\n");
         free(Candidates);
