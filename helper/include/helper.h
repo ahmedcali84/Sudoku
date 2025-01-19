@@ -1,6 +1,10 @@
 #ifndef HELPER_H
 #define HELPER_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -96,5 +100,9 @@ MATDEF Matrix adjacency_matrix(Matrix grid_matrix);
 MATDEF size_t *get_neighbors(Matrix *matrix, size_t row, size_t col, int *num_neighbours);
 
 /* END OF GRID FUNCTIONS */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HELPER_H
