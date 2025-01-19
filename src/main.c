@@ -1,7 +1,7 @@
 #include "sudoku.h"
 
 // NOTE: Declare a 2D Board of BOARD_ROWS x BOARD_COLS
-CellPool Board[BOARD_ROWS][BOARD_COLS] = {0};
+CellPool Board[BOARD_ROWS][BOARD_COLS];
 
 // NOTE: Main Function
 int main(void) {
