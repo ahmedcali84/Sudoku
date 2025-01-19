@@ -3,8 +3,17 @@
 #include <helper.h>
 #include "sudoku.h"
 
-const int SCREEN_WIDTH  = 1600;
-const int SCREEN_HEIGHT = 900;
+// NOTE: Window Sizes
+#define SCREEN_WIDTH  900
+#define SCREEN_HEIGHT 900
+
+// NOTE: Board Sizes
+#define BOARD_WIDTH  (BOARD_ROWS)
+#define BOARD_HEIGHT (BOARD_COLS)
+
+// NOTE: Cell Sizes 
+#define CELL_WIDTH  ((float) SCREEN_WIDTH  / (float) BOARD_WIDTH)
+#define CELL_HEIGHT ((float) SCREEN_HEIGHT / (float) BOARD_HEIGHT)
 
 namespace Sudoku {
     class Frame {
@@ -12,8 +21,8 @@ namespace Sudoku {
         Frame();
         ~Frame();
         int Init(const char *file_path);
-        void DrawFrame();
-        void UpdateFrame();
+        int RenderFrame();
+        int UpdateFrame();
 
     private:
         SDL_Window *Window;
@@ -44,7 +53,7 @@ int Sudoku::Frame::Init(const char *file_path) {
     }
 
     // NOTE: Create Window 
-    Window = SDL_CreateWindow("Sudoku Animation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    Window = SDL_CreateWindow("Sudoku Animation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
     if (Window == nullptr) {
         std::cout << "ERROR: Failed to Create Window. " << SDL_GetError() << std::endl;
         return -1;
@@ -57,6 +66,40 @@ int Sudoku::Frame::Init(const char *file_path) {
         return -1;
     }
 
+    if(SDL_RenderSetLogicalSize(Renderer, SCREEN_WIDTH, SCREEN_HEIGHT) < 0) {
+        std::cout << "ERROR: Failed to Set Render Logical Size. " << SDL_GetError() << std::endl;
+        return -1;
+    }
+
+    return 0;
+}
+
+// NOTE: Draw Frame on Window
+int Sudoku::Frame::RenderFrame() {
+    if (SDL_SetRenderDrawColor(Renderer, 150 , 150 , 150 , 255) < 0) {
+        std::cout << "ERROR: Failed to Set Render Color." << SDL_GetError() << std::endl;
+        return -1; 
+    }
+
+    for (int x = 0; x < BOARD_WIDTH; ++x) {
+        if (SDL_RenderDrawLine(Renderer, x*CELL_WIDTH , 0 , x*CELL_WIDTH , SCREEN_HEIGHT) < 0) {
+            std::cout << "ERROR: Failed to Draw Line." << SDL_GetError() << std::endl;
+            return -1;  
+        }
+    }
+
+    for (int y = 0; y < BOARD_HEIGHT; ++y) {
+        if (SDL_RenderDrawLine(Renderer, 0 , y*CELL_HEIGHT , SCREEN_WIDTH, y*CELL_HEIGHT) < 0) {
+            std::cout << "ERROR: Failed to Draw Line." << SDL_GetError() << std::endl;
+            return -1;  
+        }
+    }
+    return 0;
+}
+
+// NOTE: Function that Updates Animation
+int Sudoku::Frame::UpdateFrame() {
+    // TODO: Implement 
     int quit = 0;
     while(!quit) {
         SDL_Event event;
@@ -78,6 +121,7 @@ int Sudoku::Frame::Init(const char *file_path) {
             return -1; 
         }
 
+        RenderFrame();
         SDL_RenderPresent(Renderer);
     }
 
@@ -85,22 +129,11 @@ int Sudoku::Frame::Init(const char *file_path) {
     return 0;
 }
 
-// NOTE: Draw Frame on Window
-void Sudoku::Frame::DrawFrame() {
-    // TODO: Implement
-}
-
-// NOTE: Function that Updates Animation
-void Sudoku::Frame::UpdateFrame() {
-    // TODO: Implement 
-}
-
 // NOTE: Main Function
 int main(void) {
     Sudoku::Frame F ;
-    if (F.Init("data/grid1.txt") < 0) {
-        return 1;
-    }
+    if (F.Init("data/grid1.txt") < 0) return 1;
+    if (F.UpdateFrame() < 0) return 1;
     return 0;
 }
 
