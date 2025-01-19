@@ -3,7 +3,8 @@ This C Program implements a simple backtracking and recursive algorithm to solve
 Inspired by [Leetcode Problem 37](https://leetcode.com/problems/sudoku-solver/description/)
 
 ## Usage
-*Clone the Repository: *
+
+*Clone the Repository:*
 
 ### Unzip `output.zip`
 ``` bash 
