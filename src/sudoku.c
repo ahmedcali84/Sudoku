@@ -195,6 +195,10 @@ bool Search(CellPool _Board[BOARD_ROWS][BOARD_COLS]) {
 
                     bool IsSolved = Search(_Board);
                     if(IsSolved) {
+                        if (Candidates != NULL) {
+                            free(Candidates);
+                            Candidates = NULL;
+                        }
                         return true;
                     }
                     FreeCell(_Board, i , j);
