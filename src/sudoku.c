@@ -199,7 +199,10 @@ bool Search(CellPool _Board[BOARD_ROWS][BOARD_COLS]) {
                     }
                     FreeCell(_Board, i , j);
                 }
-                free(Candidates);
+                if (Candidates != NULL) {
+                    free(Candidates);
+                    Candidates = NULL;
+                }
                 return false;
             }
         }
