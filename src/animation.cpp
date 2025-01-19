@@ -23,6 +23,7 @@ namespace Sudoku {
         int Init(const char *file_path);
         int RenderFrame();
         int UpdateFrame();
+        void CleanUp();
 
     private:
         SDL_Window *Window;
@@ -40,9 +41,7 @@ Sudoku::Frame::Frame()
 
 // NOTE: Deconstructor
 Sudoku::Frame::~Frame() {
-    SDL_DestroyWindow(Window);
-    SDL_DestroyRenderer(Renderer);
-    FreeBoard(_Board);
+    CleanUp();
 }
 
 // NOTE: Function that initializes Animation
@@ -127,6 +126,12 @@ int Sudoku::Frame::UpdateFrame() {
 
     SDL_Quit();
     return 0;
+}
+
+void Sudoku::Frame::CleanUp() {
+    SDL_DestroyWindow(Window);
+    SDL_DestroyRenderer(Renderer);
+    // FreeBoard(_Board);
 }
 
 // NOTE: Main Function
