@@ -2,3 +2,4 @@ main
 helper.o
 helper.c
 gui
+assets
