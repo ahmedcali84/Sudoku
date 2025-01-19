@@ -98,12 +98,18 @@ int Sudoku::Frame::Init(const char *file_path) {
 
 // NOTE: Draw Frame on Window
 int Sudoku::Frame::RenderFrame() {
-    if (SDL_SetRenderDrawColor(Renderer, 150 , 150 , 150 , 255) < 0) {
-        std::cout << "ERROR: Failed to Set Render Color: " << SDL_GetError() << std::endl;
-        return -1;
-    }
-
     for (int x = 0; x < BOARD_WIDTH; ++x) {
+        if (x % 3 == 0) {
+            if (SDL_SetRenderDrawColor(Renderer, 200 , 200 , 200 , 255) < 0) {
+                std::cout << "ERROR: Failed to Set Render Color: " << SDL_GetError() << std::endl;
+                return -1;
+            }
+        } else {
+           if (SDL_SetRenderDrawColor(Renderer, 100 , 100 , 100 , 255) < 0) {
+                std::cout << "ERROR: Failed to Set Render Color: " << SDL_GetError() << std::endl;
+                return -1;
+            }
+        }
         if (SDL_RenderDrawLine(Renderer, x*CELL_WIDTH , 0 , x*CELL_WIDTH , SCREEN_HEIGHT) < 0) {
             std::cout << "ERROR: Failed to Draw Line: " << SDL_GetError() << std::endl;
             return -1;
@@ -111,11 +117,23 @@ int Sudoku::Frame::RenderFrame() {
     }
 
     for (int y = 0; y < BOARD_HEIGHT; ++y) {
+        if (y % 3 == 0) {
+            if (SDL_SetRenderDrawColor(Renderer, 200 , 200 , 200 , 255) < 0) {
+                std::cout << "ERROR: Failed to Set Render Color: " << SDL_GetError() << std::endl;
+                return -1;
+            }
+        } else {
+           if (SDL_SetRenderDrawColor(Renderer, 100 , 100 , 100 , 255) < 0) {
+                std::cout << "ERROR: Failed to Set Render Color: " << SDL_GetError() << std::endl;
+                return -1;
+            }
+        }
         if (SDL_RenderDrawLine(Renderer, 0 , y*CELL_HEIGHT , SCREEN_WIDTH, y*CELL_HEIGHT) < 0) {
             std::cout << "ERROR: Failed to Draw Line: " << SDL_GetError() << std::endl;
             return -1;
         }
     }
+
     return 0;
 }
 
@@ -215,6 +233,9 @@ void Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color *color, f
     if (Surface == nullptr) {
         return;
     }
+
+    SDL_SetTextureBlendMode(Texture, SDL_BLENDMODE_BLEND); // Set blend mode 
+    SDL_SetTextureScaleMode(Texture, SDL_ScaleModeLinear); // Set linear scaling
  
    // Get the width and height of the texture
     int TextWidth, TextHeight;
