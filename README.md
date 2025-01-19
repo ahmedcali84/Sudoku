@@ -10,7 +10,13 @@ make
 ```
 
 ### Running the Program
+#### Terminal Version
 ``` bash
 ./main
+```
+
+#### Gui Version (Ongoing, Not Finished)
+``` bash
+./gui
 ```
 
