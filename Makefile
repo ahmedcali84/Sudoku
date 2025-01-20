@@ -3,7 +3,7 @@ CC=g++
 
 # NOTE: GUI VERSION
 PKGS=sdl2 SDL2_ttf
-CFLAGS=-Wall -Wextra -ggdb -I./helper/include -std=c++17 `pkg-config --cflags $(PKGS)`
+CFLAGS=-Wall -Wextra -ggdb -I./helper/include -std=c++17 -Ofast `pkg-config --cflags $(PKGS)`
 LIB=-Wl,-rpath,./helper/lib -L./helper/lib
 SRC=src/animation.cpp src/sudoku.c
 OBJ=gui
