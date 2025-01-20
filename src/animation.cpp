@@ -139,7 +139,7 @@ int Sudoku::Frame::RenderFrame() {
 
 // NOTE: Function that Updates Animation
 int Sudoku::Frame::UpdateFrame() {
-    // TODO: Implement 
+    // NOTE: Implemented
     int Closed = 0;
     while(!Closed) {
         SDL_Event event;
@@ -166,23 +166,25 @@ int Sudoku::Frame::UpdateFrame() {
         for (int i = 0; i < BOARD_WIDTH; ++i) {
             for (int j = 0; j < BOARD_HEIGHT; ++j) {
                 if (CheckCellStatus(_Board, i , j)) {
-                    DrawNumber(i , j , _Board[i][j].cell->value , &color , 1.0f);
+                    HighlightCell(i , j);
+                    DrawNumber(i , j , _Board[i][j].cell->value , &color , 0.01f);
+                    SDL_RenderPresent(Renderer);
+                    SDL_Delay(500);
+                    RenderFrame();
+                    SDL_RenderPresent(Renderer);
                 }
             }
         }
-        RenderFrame();
-        SDL_RenderPresent(Renderer);
+        SDL_Delay(1000);
     }
-
-
     return 0;
 }
 
 // NOTE: Function for highlighting a cell When being Filled
 void Sudoku::Frame::HighlightCell(int row, int col) {
-    SDL_Rect cellRect = { col * CELL_WIDTH, row * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT };
-    SDL_SetRenderDrawColor(Renderer, 255, 255, 0, 255); // Yellow color for highlight
-    SDL_RenderFillRect(Renderer, &cellRect);
+    SDL_Rect cellRect = { row * CELL_WIDTH, col * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT };
+    SDL_SetRenderDrawColor(Renderer, 90, 90, 90, 50);
+    SDL_RenderFillRect(Renderer, &cellRect); 
 }
 
 TTF_Font *Sudoku::Frame::LoadAssets(const char *file_path) {
@@ -230,7 +232,7 @@ void Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color *color, f
     }
 
     SDL_Texture *Texture = RenderTextureFromSurface(Surface);
-    if (Surface == nullptr) {
+    if (Texture == nullptr) {
         return;
     }
 
