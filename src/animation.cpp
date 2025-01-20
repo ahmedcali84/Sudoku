@@ -151,7 +151,7 @@ int Sudoku::Frame::UpdateFrame() {
             }
         }
 
-        if (SDL_SetRenderDrawColor(Renderer, 30 , 30 , 30 , 255) < 0) {
+        if (SDL_SetRenderDrawColor(Renderer, 0, 0 , 0 , 255) < 0) {
             std::cout << "ERROR: Failed to Set Render Color: " << SDL_GetError() << std::endl;
             return -1;
         }
