@@ -48,7 +48,7 @@ Sudoku::Frame::Frame()
     // No need for additional initialization here
 }
 
-// NOTE: Deconstructor
+// NOTE: Destructor
 Sudoku::Frame::~Frame() {
     CleanUp();
 }
@@ -161,17 +161,18 @@ int Sudoku::Frame::UpdateFrame() {
             return -1; 
         }
 
-        SDL_Color color = {255, 255 , 255 , 255};
+        if (RenderFrame() < 0) return -1;
+
+        SDL_Color NumberColor = {255, 255 , 255 , 255};
 
         for (int i = 0; i < BOARD_WIDTH; ++i) {
             for (int j = 0; j < BOARD_HEIGHT; ++j) {
                 if (CheckCellStatus(_Board, i , j)) {
                     HighlightCell(i , j);
-                    DrawNumber(i , j , _Board[i][j].cell->value , &color , 0.01f);
+                    int CurrentInt = _Board[i][j].cell->value;
+                    DrawNumber(i , j , CurrentInt, &NumberColor , 1.0f);
                     SDL_RenderPresent(Renderer);
                     SDL_Delay(500);
-                    RenderFrame();
-                    SDL_RenderPresent(Renderer);
                 }
             }
         }
