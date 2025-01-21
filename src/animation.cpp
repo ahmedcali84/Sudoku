@@ -18,17 +18,21 @@
 #define CELL_WIDTH  (SCREEN_WIDTH  / BOARD_WIDTH)
 #define CELL_HEIGHT (SCREEN_HEIGHT / BOARD_HEIGHT)
 
+typedef const char * String;
+
 namespace Sudoku {
     class Frame {
     public:
         Frame();
         ~Frame();
-        int Init(const char *file_path);
-        int RenderFrame();
+        int Init(String file_path);
         int UpdateFrame();
+
+    private:
+        int RenderFrame();
         void HighlightCell(int row, int col);
-        TTF_Font *LoadAssets(const char *file_path);
-        SDL_Surface *RenderTextToSurface(SDL_Color *color , const char *text);
+        TTF_Font *LoadAssets(String file_path);
+        SDL_Surface *RenderTextToSurface(SDL_Color *color , String text);
         SDL_Texture *RenderTextureFromSurface(SDL_Surface *TS);
         void DrawNumber(int row, int col, int number, SDL_Color *color, float alpha);
         void CleanUp();
@@ -54,7 +58,7 @@ Sudoku::Frame::~Frame() {
 }
 
 // NOTE: Function that initializes Animation
-int Sudoku::Frame::Init(const char *file_path) {
+int Sudoku::Frame::Init(String file_path) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "ERROR: Failed to Initialize Video: " << SDL_GetError() << std::endl;
         return -1;
@@ -188,7 +192,7 @@ void Sudoku::Frame::HighlightCell(int row, int col) {
     SDL_RenderFillRect(Renderer, &cellRect); 
 }
 
-TTF_Font *Sudoku::Frame::LoadAssets(const char *file_path) {
+TTF_Font *Sudoku::Frame::LoadAssets(String file_path) {
     TTF_Font *font = TTF_OpenFont(file_path, 50);
     if (font == nullptr) {
         std::cout << "Failed To Open Font: " << TTF_GetError() << std::endl;
@@ -197,7 +201,7 @@ TTF_Font *Sudoku::Frame::LoadAssets(const char *file_path) {
     return font;
 }
 
-SDL_Surface *Sudoku::Frame::RenderTextToSurface(SDL_Color *color , const char *text) {
+SDL_Surface *Sudoku::Frame::RenderTextToSurface(SDL_Color *color , String text) {
     SDL_Surface* TextSurface = TTF_RenderText_Solid(Font, text, *color);
     if (TextSurface == nullptr) {
         std::cout << "Failed To Render Text Solid: " << TTF_GetError() << std::endl;
@@ -215,7 +219,7 @@ SDL_Texture *Sudoku::Frame::RenderTextureFromSurface(SDL_Surface *TS) {
     return TextTexture;
 }
 
-const char *int_to_cstr(int num) {
+String int_to_cstr(int num) {
     static char Buffer[50];
     sprintf(Buffer, "%d" , num);
     return Buffer;
@@ -223,7 +227,7 @@ const char *int_to_cstr(int num) {
 
 // NOTE: Function for Drawing Color On the Frame
 void Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color *color, float alpha) {
-    const char *text = int_to_cstr(number);
+    String text = int_to_cstr(number);
     // Set the color with the specified alpha
     SDL_SetRenderDrawColor(Renderer, color->r, color->g, color->b, (Uint8)(alpha * color->a));
 
