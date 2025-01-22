@@ -183,6 +183,7 @@ int Sudoku::Frame::UpdateFrame() {
         String InitializationInformation = "INITIAL STATE OF THE BOARD";
         SDL_Color StringColor = {255, 255, 255 , 255};
         DrawString(InitializationInformation, &StringColor, 1.0f);
+        SDL_Delay(3000);
 
         if (RenderFrame() < 0) return -1;
 
@@ -264,10 +265,20 @@ void Sudoku::Frame::DrawString(String Text, SDL_Color *Color , float alpha) {
  
    // Get the width and height of the texture
     SDL_QueryTexture(Texture, nullptr, nullptr, &TextWidth, &TextHeight);
+    
+    int Padding = 5;
+    SDL_Rect SurroundRect;
+    SurroundRect.x = (SCREEN_WIDTH - TextWidth)   / 2;
+    SurroundRect.y = (SCREEN_HEIGHT - TextHeight) / 2;
+    SurroundRect.w = TextWidth +  Padding * 2;
+    SurroundRect.h = TextHeight + Padding * 2 ;
+
+    SDL_SetRenderDrawColor(Renderer, 0 , 0 , 0 , 255);
+    SDL_RenderFillRect(Renderer, &SurroundRect);
 
     SDL_Rect Rect;
-    Rect.x = 0;
-    Rect.y = 0;
+    Rect.x = SurroundRect.x + Padding;
+    Rect.y = SurroundRect.y + Padding;
     Rect.w = TextWidth;
     Rect.h = TextHeight;
     SDL_RenderCopy(Renderer , Texture , nullptr , &Rect);
