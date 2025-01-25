@@ -2,12 +2,11 @@
 CC=g++
 
 # NOTE: GUI VERSION
-PKGS=sdl2 SDL2_ttf
-CFLAGS=-Wall -Wextra -ggdb -I./helper/include -std=c++17 -Ofast `pkg-config --cflags $(PKGS)`
+CFLAGS=-Wall -Wextra -ggdb -I./helper/include -std=c++17 -Ofast
 LIB=-Wl,-rpath,./helper/lib -L./helper/lib
 SRC=src/animation.cpp src/sudoku.c
 OBJ=gui
-LFLAGS=-l:libhelper.so -lm -ldl -lpthread `pkg-config --libs $(PKGS)` 
+LFLAGS=-l:libhelper.so -lm -ldl -lpthread -lSDL2 -lSDL2_ttf -lSDL2_image
 
 # NOTE: TERMINAL VERSION
 CFLAGS1=-Wall -Wextra -ggdb -I./helper/include -std=c++17
