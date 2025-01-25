@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdio>
 #include <helper.h>
+#include <unordered_map>
 #include "sudoku.h"
 
 // NOTE: Window Sizes
@@ -173,6 +174,9 @@ namespace Sudoku {
 
     class sTexture {
     public:
+        // Default Constructor
+        sTexture() = delete;
+
         // Constructor: Create A Texture From A Surface
         sTexture(const sRenderer& Renderer, const sSurface& Surface) {
             Texture = SDL_CreateTextureFromSurface(Renderer.GetRenderer(), Surface.GetSurface());
@@ -245,16 +249,18 @@ namespace Sudoku {
         int RenderFrame();
         void HighlightCell(int row, int col);
         void DrawString(String Text, SDL_Color *Color , float alpha);
-        void DrawNumber(int row, int col, int number, SDL_Color *color, float alpha);
+        bool DrawNumber(int row, int col, int number, SDL_Color *color, float alpha);
+        sTexture CreateAndCacheTexture(String Text, SDL_Color Color);
 
     private:
         sWindow Window;
         sRenderer Renderer;
         sFont Font;
         sBoard _Board;
-
-        sSurface *Surface;
-        sTexture *Texture;
+        
+        // Caching Textures
+        std::unordered_map<int , sTexture> TextureCache;
+        std::unordered_map<String, sTexture> StringTextureCache;
     };
 };
 
@@ -267,9 +273,25 @@ Sudoku::Frame::Frame()
 
 // NOTE: Destructor
 Sudoku::Frame::~Frame() {
-    delete Surface;
-    delete Texture;
+    TextureCache.clear();
+    StringTextureCache.clear();
     std::cout << "Frame Destroyed Successfully" << std::endl;
+}
+
+Sudoku::sTexture Sudoku::Frame::CreateAndCacheTexture(String Text, SDL_Color Color) {
+    auto it = StringTextureCache.find(Text);
+    if (it == StringTextureCache.end()) {
+        // Create New Texture and Insert it into the cache
+        sSurface Surface(Font, Text, Color);
+        auto result = StringTextureCache.emplace(Text, sTexture(Renderer, Surface));
+        if (!result.second) {
+            std::cerr << "[ERROR]: Failed To Insert Texture Into Cache" << std::endl;
+            throw std::runtime_error("Failed To Insert Texture Into Cache");
+        }
+        it = result.first;
+    }
+
+    return it->second;
 }
 
 // NOTE: Draw Frame on Window
@@ -348,11 +370,13 @@ int Sudoku::Frame::UpdateFrame() {
         SDL_Color NumberColor = {255, 255 , 255 , 255};
 
         for (int i = 0; i < BOARD_WIDTH; ++i) {
-            for (int j = 0; j < BOARD_HEIGHT; ++j) {
+           for (int j = 0; j < BOARD_HEIGHT; ++j) {
                 if (CheckCellStatus(_Board.GetBoard(), i , j)) {
                     HighlightCell(i , j);
                     int CurrentInt = _Board.GetBoard()[i][j].cell->value;
-                    DrawNumber(i , j , CurrentInt, &NumberColor , 1.0f);
+                    if(!DrawNumber(i , j , CurrentInt, &NumberColor , 1.0f)) {
+                        Closed = true;
+                    }
                     SDL_RenderPresent(Renderer.GetRenderer());
                     SDL_Delay(500);
                 }
@@ -380,48 +404,67 @@ void Sudoku::Frame::DrawString(String Text, SDL_Color *Color , float alpha) {
     // Set the color with the specified alpha
     SDL_SetRenderDrawColor(Renderer.GetRenderer(), Color->r, Color->g, Color->b, (Uint8)(alpha * Color->a));
 
-    Surface = new sSurface(Font ,Text, *Color);
-    Texture = new sTexture(Renderer , *Surface);
+    sSurface Surface(Font ,Text, *Color);
+    sTexture Texture(Renderer , Surface);
 
     int TextWidth, TextHeight;
-    SDL_SetTextureBlendMode(Texture->GetTexture(), SDL_BLENDMODE_BLEND); // Set blend mode 
-    SDL_SetTextureScaleMode(Texture->GetTexture(), SDL_ScaleModeLinear); // Set linear scaling
+    SDL_SetTextureAlphaMod(Texture.GetTexture(), (Uint8) alpha * 255);
  
    // Get the width and height of the texture
-    SDL_QueryTexture(Texture->GetTexture(), nullptr, nullptr, &TextWidth, &TextHeight);
+    SDL_QueryTexture(Texture.GetTexture(), nullptr, nullptr, &TextWidth, &TextHeight);
 
     int X = (SCREEN_WIDTH - TextWidth)   / 2;
     int Y = (SCREEN_HEIGHT - TextHeight) / 2;
     int W = TextWidth;
     int H = TextHeight;
 
-    Texture->Render(Renderer , X , Y , W , H);
+    Texture.Render(Renderer , X , Y , W , H);
 }
 
 // NOTE: Function for Drawing Color On the Frame
-void Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color *Color, float alpha) {
-    // Convert the Number to be rendered to string 
-    String Text = int_to_cstr(number);
+bool Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color *Color, float alpha) {
+
+    String NumText = int_to_cstr(number);
 
     // Set the color with the specified alpha
     SDL_SetRenderDrawColor(Renderer.GetRenderer(), Color->r, Color->g, Color->b, (Uint8)(alpha * Color->a));
+    
+    auto it = TextureCache.find(number);
+    if (it == TextureCache.end()) {
+        sSurface Surface(Font, NumText , *Color);
+        auto result = TextureCache.emplace(number, sTexture(Renderer, Surface));
+        if (!result.second) {
+            std::cerr << "[ERROR]: Failed To Insert Texture Into Cache" << std::endl;
+            return false;
+        }
 
-    Surface = new sSurface(Font ,Text, *Color);
-    Texture = new sTexture(Renderer, *Surface);
+        it = result.first;
+    }
+
+    sTexture& Texture = it->second;
+    if (Texture.GetTexture() == nullptr) {
+        std::cerr << "[ERROR]: Texture is NULL";
+        return false;
+    }
 
     int TextWidth, TextHeight;
-    SDL_SetTextureBlendMode(Texture->GetTexture() , SDL_BLENDMODE_BLEND); // Set blend mode 
-    SDL_SetTextureScaleMode(Texture->GetTexture() , SDL_ScaleModeLinear); // Set linear scaling
+    SDL_SetTextureAlphaMod(Texture.GetTexture(), (Uint8)alpha*255); 
  
-   // Get the width and height of the texture
-    SDL_QueryTexture(Texture->GetTexture() , nullptr, nullptr, &TextWidth, &TextHeight);
+    // Get the width and height of the texture
+    if(SDL_QueryTexture(Texture.GetTexture(), nullptr, nullptr, &TextWidth, &TextHeight) != 0) {
+        std::cerr << "[ERROR]: Failed To Query Texture" << std::endl;
+        return false;
+    }
 
     int X = row * CELL_WIDTH  + (CELL_WIDTH - TextWidth) / 2;
     int Y = col * CELL_HEIGHT + (CELL_HEIGHT - TextHeight) / 2;
     int W = TextWidth;
     int H = TextHeight;
 
-    Texture->Render(Renderer , X , Y , W , H);
+    std::cout << "[DEBUG]: Rendering number " << number << " at (" << X << ", " << Y << ")" << std::endl;
+
+    Texture.Render(Renderer , X , Y , W , H);
+    return true;
 }
 
 // NOTE: Main Function
