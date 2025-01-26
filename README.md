@@ -22,7 +22,8 @@ make
 ./main
 ```
 
-#### Gui Version (Ongoing, Not Finished)
+#### Gui Version (Finished)
+**Visualization Of the Sudoku Board Being Animated**
 ``` bash
 ./gui
 ```
