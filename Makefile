@@ -6,7 +6,7 @@ CFLAGS=-Wall -Wextra -ggdb -I./helper/include -std=c++17 -Ofast
 LIB=-Wl,-rpath,./helper/lib -L./helper/lib
 SRC=src/animation.cpp src/sudoku.c
 OBJ=gui
-LFLAGS=-l:libhelper.so -lm -ldl -lpthread -lSDL2 -lSDL2_ttf -lSDL2_image
+LFLAGS=-l:libhelper.so -lm -ldl -lpthread -lSDL2 -lSDL2_ttf
 
 # NOTE: TERMINAL VERSION
 CFLAGS1=-Wall -Wextra -ggdb -I./helper/include -std=c++17
