@@ -7,17 +7,19 @@
 #include <unordered_map>
 #include "sudoku.h"
 
+#define FACTOR 1.0f
+
 // NOTE: Window Sizes
-#define SCREEN_WIDTH  900
-#define SCREEN_HEIGHT 900
+#define SCREEN_WIDTH  900 * FACTOR
+#define SCREEN_HEIGHT 900 * FACTOR
 
 // NOTE: Board Sizes
 #define BOARD_WIDTH  (BOARD_ROWS)
 #define BOARD_HEIGHT (BOARD_COLS)
 
 // NOTE: Cell Sizes 
-#define CELL_WIDTH  (SCREEN_WIDTH  / BOARD_WIDTH)
-#define CELL_HEIGHT (SCREEN_HEIGHT / BOARD_HEIGHT)
+#define CELL_WIDTH  (int) ((float) (SCREEN_WIDTH  / BOARD_WIDTH) * FACTOR)
+#define CELL_HEIGHT (int) ((float) (SCREEN_HEIGHT / BOARD_HEIGHT) * FACTOR)
 
 typedef const char * String;
 
@@ -135,18 +137,7 @@ namespace Sudoku {
 
     class sSurface {
     public:
-        // Constructor 1: Load Surface from File Path
-        sSurface(String FilePath) {
-            Surface = IMG_Load(FilePath);
-            if (Surface == nullptr) {
-                std::cerr << "[ERROR]: Failed to Load Surface From " << FilePath << IMG_GetError() << std::endl;
-                throw std::runtime_error("Surface Loading Failed");
-            }
-            
-            std::cout << "[INFO]: Successfully Loaded Surface From " << FilePath << std::endl;
-        }
-        
-        // Constructor 2: Create Surface From Text
+        // Constructor: Create Surface From Text
         sSurface(sFont& Font, String Text , SDL_Color Color) {
             Surface = TTF_RenderText_Solid(Font.GetFont(), Text, Color);
             if (Surface == nullptr) {
@@ -175,7 +166,7 @@ namespace Sudoku {
     class sTexture {
     public:
         // Default Constructor
-        sTexture() = delete;
+
 
         // Constructor: Create A Texture From A Surface
         sTexture(const sRenderer& Renderer, const sSurface& Surface) {
@@ -244,23 +235,19 @@ namespace Sudoku {
         Frame();
         ~Frame();
         int UpdateFrame();
-
-    private:
         int RenderFrame();
-        void HighlightCell(int row, int col);
-        void DrawString(String Text, SDL_Color *Color , float alpha);
-        bool DrawNumber(int row, int col, int number, SDL_Color *color, float alpha);
-        sTexture CreateAndCacheTexture(String Text, SDL_Color Color);
+        void HighlightCell(int row, int col, SDL_Color HighlightColor);
+        void DrawString(String Text, SDL_Color Color , float alpha);
+        bool DrawNumber(int row, int col, int number, SDL_Color color, float alpha);
+        bool Solve();
+        sBoard GetsBoard();
+        sRenderer GetsRenderer();
 
     private:
         sWindow Window;
         sRenderer Renderer;
         sFont Font;
         sBoard _Board;
-        
-        // Caching Textures
-        std::unordered_map<int , sTexture> TextureCache;
-        std::unordered_map<String, sTexture> StringTextureCache;
     };
 };
 
@@ -273,25 +260,15 @@ Sudoku::Frame::Frame()
 
 // NOTE: Destructor
 Sudoku::Frame::~Frame() {
-    TextureCache.clear();
-    StringTextureCache.clear();
     std::cout << "Frame Destroyed Successfully" << std::endl;
 }
 
-Sudoku::sTexture Sudoku::Frame::CreateAndCacheTexture(String Text, SDL_Color Color) {
-    auto it = StringTextureCache.find(Text);
-    if (it == StringTextureCache.end()) {
-        // Create New Texture and Insert it into the cache
-        sSurface Surface(Font, Text, Color);
-        auto result = StringTextureCache.emplace(Text, sTexture(Renderer, Surface));
-        if (!result.second) {
-            std::cerr << "[ERROR]: Failed To Insert Texture Into Cache" << std::endl;
-            throw std::runtime_error("Failed To Insert Texture Into Cache");
-        }
-        it = result.first;
-    }
+Sudoku::sBoard Sudoku::Frame::GetsBoard() {
+    return _Board;
+}
 
-    return it->second;
+Sudoku::sRenderer Sudoku::Frame::GetsRenderer() {
+    return Renderer;
 }
 
 // NOTE: Draw Frame on Window
@@ -337,60 +314,110 @@ int Sudoku::Frame::RenderFrame() {
 
 // NOTE: Function that Updates Animation
 int Sudoku::Frame::UpdateFrame() {
-    // NOTE: Implemented
     bool Closed = false;
-    while(!Closed) {
+    bool Solved = false;
+
+    while (!Closed) {
         SDL_Event event;
-        while(SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_QUIT: {
-                    Closed = true;
-                    std::cout << "[INFO]: Successfully Closed the Application." << std::endl;
-                } break;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                Closed = true;
+                std::cout << "[INFO]: Successfully Closed the Application." << std::endl;
+                return 0; // Exit immediately
             }
         }
 
-        if (SDL_SetRenderDrawColor(Renderer.GetRenderer(), 0, 0 , 0 , 255) < 0) {
+        if (SDL_SetRenderDrawColor(Renderer.GetRenderer(), 0, 0, 0, 255) < 0) {
             std::cerr << "[ERROR]: Failed to Set Render Color: " << SDL_GetError() << std::endl;
             return -1;
         }
 
         if (SDL_RenderClear(Renderer.GetRenderer()) < 0) {
             std::cerr << "[ERROR]: Failed to Clear Background: " << SDL_GetError() << std::endl;
-            return -1; 
+            return -1;
         }
 
-        String InitializationInformation = "INITIAL STATE OF THE BOARD";
-        SDL_Color StringColor = {255, 255, 255 , 255};
-        DrawString(InitializationInformation, &StringColor, 1.0f);
-        SDL_Delay(3000);
+        if (!Solved) {
+            String InitializationInformation = "INITIAL STATE OF THE BOARD";
+            SDL_Color StringColor = {255, 255, 255, 255};
+            DrawString(InitializationInformation, StringColor, 1.0f);
+            SDL_Delay(3000);
 
-        if (RenderFrame() < 0) return -1;
+            if (RenderFrame() < 0) return -1;
 
-        SDL_Color NumberColor = {255, 255 , 255 , 255};
+            SDL_Color NumberColor = {255, 255, 255, 255};
+            SDL_Color HighlightFilled = {90, 90, 90, 50};
 
-        for (int i = 0; i < BOARD_WIDTH; ++i) {
-           for (int j = 0; j < BOARD_HEIGHT; ++j) {
-                if (CheckCellStatus(_Board.GetBoard(), i , j)) {
-                    HighlightCell(i , j);
-                    int CurrentInt = _Board.GetBoard()[i][j].cell->value;
-                    if(!DrawNumber(i , j , CurrentInt, &NumberColor , 1.0f)) {
-                        Closed = true;
+            for (int i = 0; i < BOARD_WIDTH; ++i) {
+                for (int j = 0; j < BOARD_HEIGHT; ++j) {
+                    if (CheckCellStatus(_Board.GetBoard(), i, j)) {
+                        HighlightCell(i, j, HighlightFilled);
+                        int CurrentInt = _Board.GetBoard()[i][j].cell->value;
+                        if (!DrawNumber(i, j, CurrentInt, NumberColor, 1.0f)) {
+                            std::cerr << "[ERROR]: Failed To Draw Number: " << CurrentInt << std::endl;
+                            Closed = true;
+                            return -1;
+                        }
+                        SDL_RenderPresent(Renderer.GetRenderer());
+                        SDL_Delay(100);
                     }
-                    SDL_RenderPresent(Renderer.GetRenderer());
-                    SDL_Delay(500);
                 }
             }
+
+            if (!Solve()) {
+                std::cerr << "[ERROR]: Unable To Solve Board" << std::endl;
+                return -1;
+            }
+
+            Solved = true;
+        } else {
+            String SolvedInformation = "FINAL STATE OF THE BOARD";
+            SDL_Color FinalStringColor = {255, 255, 255, 255};
+            DrawString(SolvedInformation, FinalStringColor, 1.0f);
+            SDL_Delay(3000);
+
+            if (RenderFrame() < 0) return -1;
+
+            SDL_Color NumberColor = {255, 255, 255, 255};
+            SDL_Color HighlightFilled = {90, 90, 90, 50};
+
+            for (int i = 0; i < BOARD_WIDTH; ++i) {
+                for (int j = 0; j < BOARD_HEIGHT; ++j) {
+                    if (CheckCellStatus(_Board.GetBoard(), i, j)) {
+                        HighlightCell(i, j, HighlightFilled);
+                        int CurrentInt = _Board.GetBoard()[i][j].cell->value;
+                        if (!DrawNumber(i, j, CurrentInt, NumberColor, 1.0f)) {
+                            std::cerr << "[ERROR]: Failed To Draw Number: " << CurrentInt << std::endl;
+                            Closed = true;
+                            return -1;
+                        }
+                        SDL_RenderPresent(Renderer.GetRenderer());
+                        SDL_Delay(100);
+                    }
+                }
+            }
+
+            // Wait for user to close the window
+            while (!Closed) {
+                while (SDL_PollEvent(&event)) {
+                    if (event.type == SDL_QUIT) {
+                        Closed = true;
+                        std::cout << "[INFO]: Successfully Closed the Application." << std::endl;
+                        return 0; // Exit immediately
+                    }
+                }
+                SDL_Delay(100);
+            }
         }
-        SDL_Delay(1000);
     }
+
+    PrintBoard(_Board.GetBoard());
     return 0;
 }
-
 // NOTE: Function for highlighting a cell When being Filled
-void Sudoku::Frame::HighlightCell(int row, int col) {
+void Sudoku::Frame::HighlightCell(int row, int col, SDL_Color HighlightColor) {
     SDL_Rect cellRect = { row * CELL_WIDTH, col * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT };
-    SDL_SetRenderDrawColor(Renderer.GetRenderer(), 90, 90, 90, 50);
+    SDL_SetRenderDrawColor(Renderer.GetRenderer(), HighlightColor.r, HighlightColor.g, HighlightColor.b, HighlightColor.a);
     SDL_RenderFillRect(Renderer.GetRenderer(), &cellRect); 
 }
 
@@ -400,11 +427,11 @@ String int_to_cstr(int num) {
     return Buffer;
 }
 
-void Sudoku::Frame::DrawString(String Text, SDL_Color *Color , float alpha) {
+void Sudoku::Frame::DrawString(String Text, SDL_Color Color , float alpha) {
     // Set the color with the specified alpha
-    SDL_SetRenderDrawColor(Renderer.GetRenderer(), Color->r, Color->g, Color->b, (Uint8)(alpha * Color->a));
+    SDL_SetRenderDrawColor(Renderer.GetRenderer(), Color.r, Color.g, Color.b, (Uint8)(alpha * Color.a));
 
-    sSurface Surface(Font ,Text, *Color);
+    sSurface Surface(Font ,Text, Color);
     sTexture Texture(Renderer , Surface);
 
     int TextWidth, TextHeight;
@@ -422,37 +449,22 @@ void Sudoku::Frame::DrawString(String Text, SDL_Color *Color , float alpha) {
 }
 
 // NOTE: Function for Drawing Color On the Frame
-bool Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color *Color, float alpha) {
+bool Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color Color, float alpha) {
 
     String NumText = int_to_cstr(number);
 
     // Set the color with the specified alpha
-    SDL_SetRenderDrawColor(Renderer.GetRenderer(), Color->r, Color->g, Color->b, (Uint8)(alpha * Color->a));
+    SDL_SetRenderDrawColor(Renderer.GetRenderer(), Color.r, Color.g, Color.b, (Uint8)(alpha * Color.a));
     
-    auto it = TextureCache.find(number);
-    if (it == TextureCache.end()) {
-        sSurface Surface(Font, NumText , *Color);
-        auto result = TextureCache.emplace(number, sTexture(Renderer, Surface));
-        if (!result.second) {
-            std::cerr << "[ERROR]: Failed To Insert Texture Into Cache" << std::endl;
-            return false;
-        }
-
-        it = result.first;
-    }
-
-    sTexture& Texture = it->second;
-    if (Texture.GetTexture() == nullptr) {
-        std::cerr << "[ERROR]: Texture is NULL";
-        return false;
-    }
+    sSurface Surface(Font, NumText , Color);
+    sTexture Texture(Renderer, Surface);
 
     int TextWidth, TextHeight;
     SDL_SetTextureAlphaMod(Texture.GetTexture(), (Uint8)alpha*255); 
  
     // Get the width and height of the texture
     if(SDL_QueryTexture(Texture.GetTexture(), nullptr, nullptr, &TextWidth, &TextHeight) != 0) {
-        std::cerr << "[ERROR]: Failed To Query Texture" << std::endl;
+        std::cerr << "[ERROR]: Failed To Query Texture For Number: " << number << " " << SDL_GetError() << std::endl;
         return false;
     }
 
@@ -467,9 +479,55 @@ bool Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color *Color, f
     return true;
 }
 
+bool Sudoku::Frame::Solve() {
+    if (ValidBoard(_Board.GetBoard())) {
+        return true;
+    }
+
+    SDL_Color Color = {200, 200, 200, 200};
+    SDL_Color HighlightCandidate = {150, 150, 150, 255};
+
+    for (int i = 0; i < BOARD_ROWS; ++i) {
+        for (int j = 0; j < BOARD_COLS; ++j) {
+            if(!CheckCellStatus(_Board.GetBoard(), i , j)) {
+                int Count;
+                int *Candidates = GetCandidates(_Board.GetBoard(), i , j, &Count);
+                for (int k = 0; k < Count; ++k) {
+                    SetCell(_Board.GetBoard(), i , j , Candidates[k]);
+                    HighlightCell(i , j , HighlightCandidate);
+                    DrawNumber(i , j , Candidates[k], Color , 1.0f);
+                    SDL_RenderPresent(Renderer.GetRenderer());
+                    SDL_Delay(7);
+
+                    // Process events to keep the application responsive
+                    SDL_Event event;
+                    while (SDL_PollEvent(&event)) {
+                        if (event.type == SDL_QUIT) {
+                            free(Candidates);
+                            return false; // Exit if the user closes the window
+                        }
+                    }
+
+                    if(Solve()) {
+                        free(Candidates);
+                        return true;
+                    }
+
+                    FreeCell(_Board.GetBoard(), i , j);
+                }
+                free(Candidates);
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 // NOTE: Main Function
 int main(void) {
     Sudoku::Frame F;
-    F.UpdateFrame();
+    if(!F.UpdateFrame()) {
+        return 1;
+    }
     return 0;
 }
