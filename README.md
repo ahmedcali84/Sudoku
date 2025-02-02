@@ -2,6 +2,9 @@
 This C Program implements a simple backtracking and recursive algorithm to solve a Sudoku Board Problem.
 Inspired by [Leetcode Problem 37](https://leetcode.com/problems/sudoku-solver/description/)
 
+## Dependencies
+- SDL2
+
 ## Usage
 
 *Clone the Repository:*
