@@ -17,7 +17,7 @@
 #define BOARD_WIDTH  (BOARD_ROWS)
 #define BOARD_HEIGHT (BOARD_COLS)
 
-// NOTE: Cell Sizes 
+// NOTE: Cell Sizes
 #define CELL_WIDTH  (int) ((float) (SCREEN_WIDTH  / BOARD_WIDTH) * FACTOR)
 #define CELL_HEIGHT (int) ((float) (SCREEN_HEIGHT / BOARD_HEIGHT) * FACTOR)
 
@@ -36,23 +36,23 @@ namespace Sudoku {
 
             std::cout << "[INFO]: Successfully Initialized SDL Video." << std::endl;
 
-            // NOTE: Create Window 
+            // NOTE: Create Window
             Window = SDL_CreateWindow("Sudoku Animation", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
             if (Window == nullptr) {
                 std::cerr << "[ERROR]: Failed to Create Window: " << SDL_GetError() << std::endl;
                 throw std::runtime_error("Window Creation Failed");
             }
 
-            std::cout << "[INFO]: Successfully Created Window" << std::endl;    
+            std::cout << "[INFO]: Successfully Created Window" << std::endl;
         }
-        
+
         // Destructor
         ~sWindow() {
             // NOTE: Destroy the Window
             SDL_DestroyWindow(Window);
             SDL_Quit();
         }
-        
+
         // Getter foe the Window
         SDL_Window *GetWindow() const {
             return Window;
@@ -66,7 +66,7 @@ namespace Sudoku {
     public:
         // Constructor
         sRenderer(const sWindow &Window) {
-            // NOTE: Create Renderer 
+            // NOTE: Create Renderer
             Renderer = SDL_CreateRenderer(Window.GetWindow(), -1, 0);
             if (Renderer == nullptr) {
                 std::cerr << "[ERROR]: Failed to Create Renderer: " << SDL_GetError() << std::endl;
@@ -83,11 +83,11 @@ namespace Sudoku {
 
             std::cout << "[INFO]: Successfully Set Render Logical size." << std::endl;
         }
-        
+
         SDL_Renderer *GetRenderer() const {
             return Renderer;
         }
-        
+
         // Destructor
         ~sRenderer() {
             // NOTE: Destroy the Renderer
@@ -119,13 +119,13 @@ namespace Sudoku {
 
             std::cout << "[INFO]: Successfully Loaded " << FontFilePath << std::endl;
         }
-        
+
         // Destructor
         ~sFont() {
             TTF_CloseFont(Font);
             TTF_Quit();
         }
-        
+
         // Getter For Font
         TTF_Font *GetFont() const {
             return Font;
@@ -144,7 +144,7 @@ namespace Sudoku {
                 std::cerr << "[ERROR]: Failed To Render Text Solid: " << TTF_GetError() << std::endl;
                 throw std::runtime_error("Failed To Create Surface");
             }
-            
+
             std::cout << "[INFO]: Successfully Created Surface From Text" << std::endl;
         }
 
@@ -178,19 +178,19 @@ namespace Sudoku {
 
             std::cout << "[INFO]: Successfully Created Texture From Surface" << std::endl;
         }
-        
+
         // Destructor
         ~sTexture() {
             if (Texture) {
                 SDL_DestroyTexture(Texture);
             }
         }
-        
+
         // Getter For Texture
         SDL_Texture *GetTexture() const {
             return Texture;
         }
-        
+
         // Render the Texture
         void Render(const sRenderer& Renderer, int x , int y , int width , int height) {
             SDL_Rect Rect = {x , y , width , height};
@@ -200,7 +200,7 @@ namespace Sudoku {
     private:
         SDL_Texture *Texture;
     };
-    
+
     class sBoard{
     public:
         // Constructor
@@ -215,12 +215,12 @@ namespace Sudoku {
             }
             InitBoard(grid, _Board);
         }
-        
+
         // Destructor
         ~sBoard() {
             FreeBoard(_Board);
         }
-        
+
         // Getter For Board
         CellPool (&GetBoard())[BOARD_ROWS][BOARD_COLS] {
             return _Board;
@@ -418,7 +418,7 @@ int Sudoku::Frame::UpdateFrame() {
 void Sudoku::Frame::HighlightCell(int row, int col, SDL_Color HighlightColor) {
     SDL_Rect cellRect = { row * CELL_WIDTH, col * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT };
     SDL_SetRenderDrawColor(Renderer.GetRenderer(), HighlightColor.r, HighlightColor.g, HighlightColor.b, HighlightColor.a);
-    SDL_RenderFillRect(Renderer.GetRenderer(), &cellRect); 
+    SDL_RenderFillRect(Renderer.GetRenderer(), &cellRect);
 }
 
 String int_to_cstr(int num) {
@@ -436,7 +436,7 @@ void Sudoku::Frame::DrawString(String Text, SDL_Color Color , float alpha) {
 
     int TextWidth, TextHeight;
     SDL_SetTextureAlphaMod(Texture.GetTexture(), (Uint8) alpha * 255);
- 
+
    // Get the width and height of the texture
     SDL_QueryTexture(Texture.GetTexture(), nullptr, nullptr, &TextWidth, &TextHeight);
 
@@ -455,13 +455,13 @@ bool Sudoku::Frame::DrawNumber(int row, int col, int number, SDL_Color Color, fl
 
     // Set the color with the specified alpha
     SDL_SetRenderDrawColor(Renderer.GetRenderer(), Color.r, Color.g, Color.b, (Uint8)(alpha * Color.a));
-    
+
     sSurface Surface(Font, NumText , Color);
     sTexture Texture(Renderer, Surface);
 
     int TextWidth, TextHeight;
-    SDL_SetTextureAlphaMod(Texture.GetTexture(), (Uint8)alpha*255); 
- 
+    SDL_SetTextureAlphaMod(Texture.GetTexture(), (Uint8)alpha*255);
+
     // Get the width and height of the texture
     if(SDL_QueryTexture(Texture.GetTexture(), nullptr, nullptr, &TextWidth, &TextHeight) != 0) {
         std::cerr << "[ERROR]: Failed To Query Texture For Number: " << number << " " << SDL_GetError() << std::endl;
@@ -526,6 +526,7 @@ bool Sudoku::Frame::Solve() {
 // NOTE: Main Function
 int main(void) {
     Sudoku::Frame F;
+    // Updates Frames
     if(!F.UpdateFrame()) {
         return 1;
     }
